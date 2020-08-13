@@ -156,13 +156,18 @@ pkg_repo_binary_try_fetch(struct pkg_repo *repo, struct pkg *pkg,
 	 * download it */
 	if (stat(dest, &st) == 0) {
 		/* try to resume */
-		if (pkg->pkgsize > st.st_size) {
+	  pkg_emit_error("%s-%s old size: %d new size %d", pkg->name, pkg->version, st.st_size, pkg->pkgsize);
+	  pkg_emit_error("%s-%s old time: %d new time %d", pkg->name, pkg->version, st.st_mtim.tv_sec, pkg->timestamp);
+		if (pkg->pkgsize > st.st_size && st.st_mtim.tv_sec >= pkg->timestamp) {
 			offset = st.st_size;
+	  	pkg_emit_error("%s-%s resuming", pkg->name, pkg->version);
 			pkg_debug(1, "Resuming fetch");
-		} else {
+		} else if (st.st_mtim.tv_sec >= pkg->timestamp) {
+	  	pkg_emit_error("%s-%s checksuming", pkg->name, pkg->version);
 			goto checksum;
 		}
 	}
+	pkg_emit_error("%s-%s downloading", pkg->name, pkg->version);
 
 	/* Create the dirs in cachedir */
 	dir = xstrdup(dest);
